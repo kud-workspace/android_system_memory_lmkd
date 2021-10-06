@@ -221,10 +221,10 @@ static int reclaim_scan_threshold = 1024;
 static bool use_minfree_levels;
 static bool force_use_old_strategy;
 static bool per_app_memcg;
-static bool enhance_batch_kill;
-static bool enable_adaptive_lmk;
-static bool enable_userspace_lmk;
-static bool enable_watermark_check;
+static bool __unused enhance_batch_kill = false;
+static bool enable_adaptive_lmk = false;
+static bool enable_userspace_lmk = true;
+static bool enable_watermark_check = true;
 static int swap_free_low_percentage;
 static int psi_partial_stall_ms;
 static int psi_complete_stall_ms;
@@ -247,8 +247,8 @@ static struct psi_threshold psi_thresholds[VMPRESS_LEVEL_COUNT] = {
     { PSI_FULL, PSI_OLD_CRIT_THRESH_MS },    /* Default 70ms out of 1sec for complete stall */
     { PSI_FULL, PSI_SCRIT_COMPLETE_STALL_MS }, /* Default 80ms out of 1sec for complete stall */
 };
-static int wmark_boost_factor = 1;
-static int wbf_step = 1, wbf_effective = 1;
+static int wmark_boost_factor = 4; /* lahaina defaults */
+static int wbf_step = 1, wbf_effective = 4;
 
 static android_log_context ctx;
 
@@ -622,8 +622,10 @@ static bool s_crit_event_upgraded = false;
  */
 static long page_k = PAGE_SIZE / 1024;
 
+#ifndef LMKD_NO_QTI_PERFD
 static void init_PreferredApps();
 static void update_perf_props();
+#endif
 
 static void update_props();
 static bool init_monitors();
@@ -4211,6 +4213,7 @@ int issue_reinit() {
     return res == UPDATE_PROPS_SUCCESS ? 0 : -1;
 }
 
+#ifndef LMKD_NO_QTI_PERFD
 static void init_PreferredApps() {
     void *handle = NULL;
     handle = dlopen(IOPD_LIB, RTLD_NOW);
@@ -4350,6 +4353,7 @@ static void update_perf_props() {
         init_PreferredApps();
     }
 }
+#endif
 
 static void update_props() {
     /* By default disable low level vmpressure events */
@@ -4392,8 +4396,10 @@ static void update_props() {
     thrashing_critical_pct = max(0, property_get_int32("ro.lmk.thrashing_limit_critical",
         thrashing_limit_pct * 2));
 
+#ifndef LMKD_NO_QTI_PERFD
     // Update Perf Properties
     update_perf_props();
+#endif
 }
 
 int main(int argc, char **argv) {

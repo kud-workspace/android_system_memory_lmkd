@@ -31,7 +31,8 @@ cc_binary {
         "-Wall",
         "-Werror",
         "-Wextra",
-        "-DLMKD_TRACE_KILLS"
+        "-DLMKD_TRACE_KILLS",
+        "-DLMKD_NO_QTI_PERFD",
     ],
     init_rc: ["lmkd.rc"],
     defaults: ["stats_defaults"],
